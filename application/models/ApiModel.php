@@ -36,7 +36,45 @@ class ApiModel extends Model
         $stmt->bindValue(":seller_id", $param["seller_id"]);
         $stmt->bindValue(":category_id", $param["category_id"]);
         $stmt->execute();
-        
+
         return intval($this->pdo->lastInsertId());
+    }
+
+    public function productList2() {
+        $sql = "SELECT t3.*, t4.path FROM (
+                    SELECT t1.*, t2.cate1, t2.cate2, t2.cate3
+                    FROM t_product t1
+                    INNER JOIN t_category t2
+                    ON t1.category_id = t2.id
+                ) t3
+                LEFT JOIN (
+                    SELECT * FROM t_product_img WHERE type=1
+                ) t4
+                ON t3.id = t4.id";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_OBJ);
+    }
+
+    public function productDetail(&$param) {
+        $sql = "SELECT t3.*, t4.path FROM (
+                    SELECT t1.*, t2.cate1, t2.cate2, t2.cate3
+                    FROM t_product t1
+                    INNER JOIN t_category t2
+                    ON t1.category_id = t2.id
+                    WHERE t1.id = :product_id
+                ) t3
+                LEFT JOIN (
+                    SELECT * FROM t_product_img WHERE type=1
+                ) t4
+                ON t3.id = t4.id";
+
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->bindValue(":product_id", $param["product_id"]);
+        $stmt->execute();
+
+        return $stmt->fetch(PDO::FETCH_OBJ);
     }
 }
