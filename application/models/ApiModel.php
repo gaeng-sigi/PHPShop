@@ -72,9 +72,28 @@ class ApiModel extends Model
                 ON t3.id = t4.id";
 
         $stmt = $this->pdo->prepare($sql);
-        $stmt->bindValue(":product_id", $param["product_id"]);
-        $stmt->execute();
+
+        $stmt->execute([$param["product_id"]]);
 
         return $stmt->fetch(PDO::FETCH_OBJ);
+    }
+
+    public function productImageInsert(&$param) { // 이미지 db로~
+        $sql = "INSERT INTO t_product_img
+                SET product_id = :product_id,
+                type = :type,
+                path = :path";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$param["product_id"], $param["type"], $param["path"]]);
+
+        return $stmt->rowCount();
+    }
+
+    public function productImageList(&$param) {
+        $sql = "SELECT * FROM t_product_img WHERE product_id = :product_id";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute([$param["product_id"]]);
+
+        return $stmt->fetchAll(PDO::FETCH_OBJ);
     }
 }
