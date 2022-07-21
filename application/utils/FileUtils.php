@@ -19,3 +19,20 @@ function gen_uuid_v4() {
         , mt_rand(0, 0xffff) 
     ); 
 }
+
+function rmdirAll($delete_path)
+{
+    $dirs = dir($delete_path);
+
+    while (false !== ($entry = $dirs->read())) {
+        if (($entry != '.') && ($entry != '..')) {
+            if (is_dir($delete_path . '/' . $entry)) {
+                rmdirAll($delete_path . '/' . $entry);
+            } else {
+                @unlink($delete_path . '/' . $entry);
+            }
+        }
+    }
+    $dirs->close();
+    @rmdir($delete_path);
+}

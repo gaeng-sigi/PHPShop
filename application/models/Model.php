@@ -16,4 +16,16 @@ class Model {
             var_dump("DB 접속 중 에러가 발생하였습니다. :::: " . $e->getMessage());
         }
     }
+
+    public function beginTransaction() {
+        $this->pdo->beginTransaction();
+    }
+
+    public function rollback() {
+        $this->pdo->rollback();
+    }
+
+    public function commit() {
+        $this->pdo->commit();
+    }
 }

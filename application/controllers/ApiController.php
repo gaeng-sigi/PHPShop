@@ -2,6 +2,8 @@
 
 namespace application\controllers;
 
+use Exception;
+
 class ApiController extends Controller {
     public function categoryList() {
         return $this->model->getCategoryList();
@@ -13,9 +15,12 @@ class ApiController extends Controller {
         return [_RESULT => $this->model->productInsert($json)];
     }
 
+    public function productList() {
+        return $this->model->productList();
+    }
+
     public function productList2() {
-        $result = $this->model->productList2();
-        return $result === false ? [] : $result;
+        return $this->model->productList2();
     }
 
     public function productDetail() {
@@ -53,11 +58,13 @@ class ApiController extends Controller {
         $result = file_put_contents($filePath, $image_base64);
 
         // 이미지 db로~
-        $param = [
-            'product_id' => $productId,
-            'type' => $type,
-            'path' => $file_Nm
-        ];
+        if($result) {
+            $param = [
+                'product_id' => $productId,
+                'type' => $type,
+                'path' => $file_Nm
+            ];
+        }
 
         return $this->model->productImageInsert($param);
     }
@@ -74,5 +81,65 @@ class ApiController extends Controller {
         ];
 
         return $this->model->productImageList($param);
+    }
+
+    public function productImageDelete() {
+        $urlPaths = getUrlPaths();
+        if (count($urlPaths) !== 6) {
+            exit();
+        }
+
+        $result = 0;
+        switch(getMethod()) {
+            case _DELETE:
+                $product_image_id = intval($urlPaths[2]);
+                $product_id = intval($urlPaths[3]);
+                $type = intval($urlPaths[4]);
+                $path = $urlPaths[5];
+
+                // 이미지 삭제
+                $imgPath = _IMG_PATH . "/" . $product_id . "/" . $type . "/" . $path;
+
+                if(unlink($imgPath)) {
+                    // sql 삭제.
+                    $param = ["product_image_id" => $product_image_id];
+                    $result = $this->model->productImageDelete($param);
+                };
+
+                break;
+        }
+        return [_RESULT => $result];
+    }
+
+    public function deleteProduct() {
+        $urlPaths = getUrlPaths();
+        if(count($urlPaths) !== 3) {
+            exit();
+        }
+        $imgPath = _IMG_PATH . "/" . $urlPaths[2];
+        if (is_dir($imgPath)) {
+            rmdirAll($imgPath);
+        }
+
+
+        $productId = intval($urlPaths[2]);
+
+        try {
+            $param = [
+                "product_id" => $productId
+            ];
+            $this->model->beginTransaction();
+            $this->model->productImageDelete($param);
+            $result = $this->model->productDelete($param);
+            if ($result === 1) {
+                $this->model->commit();
+            } else {
+                $this->model->rollback();
+            }
+        } catch (Exception $e) {
+            $this->model->rollback();
+        }
+
+        return [_RESULT => 1];
     }
 }
